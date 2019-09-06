@@ -13,6 +13,7 @@ except ImportError:
     from urllib.parse import urljoin
     from urllib.parse import urlencode
 import random
+from urllib.parse import urlparse, parse_qs
 
 
 def create_url(base, path=None, *query):
@@ -66,11 +67,13 @@ def create_cas_login_url(cas_url, cas_route, service, renew=None, gateway=None):
     ... )
     'http://sso.pdx.edu/cas?service=http%3A%2F%2Flocalhost%3A5000'
     """
+    gt = parse_qs(urlparse(service).query).get('gt')
     return create_url(
         cas_url,
         cas_route,
         ('service', service),
         ('random', random.random()),
+        ('ticket', gt[0] if gt else None),
         ('renew', renew),
         ('gateway', gateway),
     )
