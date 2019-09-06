@@ -12,6 +12,7 @@ except ImportError:
     from urllib.parse import quote
     from urllib.parse import urljoin
     from urllib.parse import urlencode
+import random
 
 
 def create_url(base, path=None, *query):
@@ -69,6 +70,7 @@ def create_cas_login_url(cas_url, cas_route, service, renew=None, gateway=None):
         cas_url,
         cas_route,
         ('service', service),
+        ('random', random.random()),
         ('renew', renew),
         ('gateway', gateway),
     )
