@@ -17,6 +17,8 @@ from . import routing
 
 from functools import wraps
 
+__version__ = '1.1.0'
+
 class CAS(object):
     """
     Required Configs:
