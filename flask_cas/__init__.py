@@ -86,7 +86,50 @@ class CAS(object):
         return flask.session.get(
             self.app.config['CAS_TOKEN_SESSION_KEY'], None)
 
+def __unipus_sso_ticket(data, salt='unipus!@#SuiSXue'):
+    import base64
+    from Crypto.Cipher import AES
+    from urllib import parse
+
+    base_text = base64.b64decode(parse.unquote(data).encode('utf8'))
+    cryptor = AES.new(salt, AES.MODE_CBC, salt)
+    plain_text = cryptor.decrypt(base_text)
+    ne = plain_text.decode('utf-8').rstrip('\0')
+    return ne
+
 def login():
+    gt = flask.request.args.get('gt')
+    if gt:
+        ticket = __unipus_sso_ticket(gt)
+        _args = dict((k, v) for k, v in flask.request.args.items() if k != 'gt')
+        _args['ticket'] = ticket
+        ourl = flask.request.url
+        # _args['origin'] = ourl[len('http://moocs.unipus.cn'):(ourl.find('gt=') - 1)]
+        _args['origin'] = ourl[:(ourl.find('gt=') - 1)]
+        flask.request.args = _args
+        print('flask.request.url: ', ourl[len('http://moocs.unipus.cn'):(ourl.find('gt=') - 1)])
+        import requests
+        resp = requests.post('https://sso.unipus.cn/sso/1.0/sso/grantServiceTicket',
+            json={
+                'grantingTicket': ticket,
+                'service': flask.url_for('cas.login', _external=True, origin=ourl[len('http://moocs.unipus.cn'):(ourl.find('gt=') - 1)]),
+            }
+        )
+        print('resp.json:', resp.json())
+        print('-*-' * 20)
+        print(flask.url_for('cas.login', _external=True, origin=ourl[len('http://moocs.unipus.cn'):(ourl.find('gt=') - 1)]))
+        flask.session['CAS_AFTER_LOGIN_SESSION_URL'] = ourl[len('http://moocs.unipus.cn'):(ourl.find('gt=') - 1)]
+        print(ourl[len('http://moocs.unipus.cn'):(ourl.find('gt=') - 1)])
+        print(flask.request.full_path)
+        print('-*-' * 20)
+        return flask.redirect(
+            flask.url_for(
+                'cas.login',
+                _external=True,
+                ticket=resp.json()['rs']['serviceTicket'],
+                origin=ourl[len('http://moocs.unipus.cn'):(ourl.find('gt=') - 1)],
+            )
+        )
     return flask.redirect(flask.url_for('cas.login', _external=True))
 
 def logout():
