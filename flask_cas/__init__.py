@@ -98,6 +98,9 @@ def __unipus_sso_ticket(data, salt='unipus!@#SuiSXue'):
     return ne
 
 def login():
+    print('cookie:' * 10)
+    print(flask.request.headers.get('cookie'))
+    print('cookie:' * 10)
     gt = flask.request.args.get('gt')
     if gt:
         ticket = __unipus_sso_ticket(gt)
